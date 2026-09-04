@@ -594,6 +594,10 @@ func redactedSecretAPIToTerraform(secret string) types.String {
 	return types.StringValue(secret)
 }
 
+// reverseProxyServiceAPIToTerraform fills the Terraform model from a service the API returned,
+// defaulting the fields the API may omit. Auth secrets are mapped through
+// redactedSecretAPIToTerraform, so the blanks the API returns in their place become null;
+// callers that hold a prior state or plan restore the real values with preserveAuthSecrets.
 func reverseProxyServiceAPIToTerraform(ctx context.Context, svc *api.Service, data *ReverseProxyServiceModel) diag.Diagnostics {
 	var ret diag.Diagnostics
 	var d diag.Diagnostics
