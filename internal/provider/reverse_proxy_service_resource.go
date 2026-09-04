@@ -536,6 +536,8 @@ func targetOptionsAPIToTerraform(ctx context.Context, opts *api.ServiceTargetOpt
 	return obj, d
 }
 
+// targetOptionsTerraformToAPI maps the target options block to the API type, skipping unset
+// attributes. Returns nil when none is set, so an empty block keeps the server defaults.
 func targetOptionsTerraformToAPI(ctx context.Context, opts types.Object) (*api.ServiceTargetOptions, diag.Diagnostics) {
 	if opts.IsNull() || opts.IsUnknown() {
 		return nil, nil
@@ -584,9 +586,8 @@ func targetOptionsTerraformToAPI(ctx context.Context, opts types.Object) (*api.S
 	return result, ret
 }
 
-// redactedSecretAPIToTerraform maps the blank the API returns for a secret to null.
-// An empty string never matches a configuration that omits the secret, so it would
-// show a diff on every plan.
+// redactedSecretAPIToTerraform maps the blank the API returns for a secret to null. An empty
+// string never matches a configuration that omits the secret, so it would diff on every plan.
 func redactedSecretAPIToTerraform(secret string) types.String {
 	if secret == "" {
 		return types.StringNull()
@@ -594,10 +595,8 @@ func redactedSecretAPIToTerraform(secret string) types.String {
 	return types.StringValue(secret)
 }
 
-// reverseProxyServiceAPIToTerraform fills the Terraform model from a service the API returned,
-// defaulting the fields the API may omit. Auth secrets are mapped through
-// redactedSecretAPIToTerraform, so the blanks the API returns in their place become null;
-// callers that hold a prior state or plan restore the real values with preserveAuthSecrets.
+// reverseProxyServiceAPIToTerraform fills the model from an API service, defaulting the fields
+// the API may omit. Blanked auth secrets become null; preserveAuthSecrets restores them.
 func reverseProxyServiceAPIToTerraform(ctx context.Context, svc *api.Service, data *ReverseProxyServiceModel) diag.Diagnostics {
 	var ret diag.Diagnostics
 	var d diag.Diagnostics

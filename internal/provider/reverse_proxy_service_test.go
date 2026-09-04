@@ -1247,6 +1247,7 @@ func Test_reverseProxyServiceDataSourceSchema(t *testing.T) {
 	var _ datasource.DataSource = &ReverseProxyServiceDataSource{}
 }
 
+// Header auth is a list: a round trip must keep every entry, its value, and the order.
 func Test_reverseProxyServiceRoundtrip_headerAuth(t *testing.T) {
 	ctx := context.Background()
 
@@ -1298,8 +1299,7 @@ func Test_reverseProxyServiceRoundtrip_headerAuth(t *testing.T) {
 	}
 }
 
-// assertMappedSecret checks the mapped value of an auth secret: null when the API
-// blanked it, the value itself otherwise.
+// assertMappedSecret checks a mapped auth secret: null when the API blanked it, the value otherwise.
 func assertMappedSecret(t *testing.T, value attr.Value, apiValue, field string) {
 	t.Helper()
 
@@ -1318,13 +1318,10 @@ func assertMappedSecret(t *testing.T, value attr.Value, apiValue, field string) 
 	}
 }
 
-// The API never returns auth secrets (ToAPIResponse builds the auth config without
-// them), so state must hold null. For password and pin, which are Optional, "" would
-// show a diff against a configuration that omits them; header_auths[].value is
-// Required, so null there is
-// truthfulness rather than convergence. Mapping back, a null must become a blank inside an
-// enabled auth block: dropping the block would disable the auth method. The
-// "value present" case guards the branch that must leave a real value alone.
+// The API never returns auth secrets, so state must hold null: for Optional password and pin an
+// empty string diffs against a configuration that omits them. Mapping back, null must become a
+// blank inside an enabled block, or the auth method would be dropped. The "value present" case
+// covers the branch that leaves a real value alone.
 func Test_reverseProxyServiceRoundtrip_authSecrets(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -1438,6 +1435,7 @@ func Test_reverseProxyServiceRoundtrip_authSecrets(t *testing.T) {
 	}
 }
 
+// Access restrictions are optional on both sides: a round trip must not drop the block or its lists.
 func Test_reverseProxyServiceRoundtrip_accessRestrictions(t *testing.T) {
 	ctx := context.Background()
 
